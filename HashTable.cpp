@@ -4,111 +4,110 @@ using namespace std;
 
 class HashTable
 {
-    int size;
-    int *arr1;
-    int input;
-    float alpha;       //alpha= load
+    int capacity;
+    int *hashArray;
+    int elementsCount;
+    float loadFactor; 
 
 public:
-    HashTable(int x)
+    HashTable(int initialSize)
     {
-        size = x;
-        arr1 = new int[size];
-        alpha = 0.8;
-        input = 0;
+        capacity = initialSize;
+        hashArray = new int[capacity];
+        loadFactor = 0.8;
+        elementsCount = 0;
         
-
-        // initially set every input to -1
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < capacity; i++)
         {
-            arr1[i] = -1;
+            hashArray[i] = -1;
         }
     }
 
-
-    int resize(int size_current)    //Next prime number atleats twice the current size
+    int nextPrime(int currentSize) 
     {
-        int no = size_current * 2;
-        while (isPrime(no) != true)
+        int num = currentSize * 2;
+        while (!isPrime(num))
         {
-            no += 1;
+            num++;
         }
-        return no;
+        return num;
     }
     
-    bool isPrime(int no)        //To check if number is prime
+    bool isPrime(int num) 
     {
-        int c = 0;      //counter
-        for (int i = 1; i <= no; i++)
+        int count = 0; 
+        for (int i = 1; i <= num; i++)
         {
-            if (no % i == 0)
+            if (num % i == 0)
             {
-                c += 1;
+                count++;
             }
         }
-        return c == 2;
+        return count == 2;
     }
 
-    void Resizing()
+    void resizeTable()
     {
-        int newsz = resize(size);        //size of resized table
-        int *arr2 = new int[newsz];
+        int newSize = nextPrime(capacity); 
+        int *tempArray = new int[newSize];
 
-        // initially set values to -1
-        for (int i = 0; i < newsz; i++)
+        for (int i = 0; i < newSize; i++)
         {
-            arr2[i] = -1;
+            tempArray[i] = -1;
         }
 
-        for (int i = 0; i < size; i++)
+        
+        for (int i = 0; i < capacity; i++)
         {
-            if (arr1[i] != -1)
+            if (hashArray[i] != -1)
             {
-                int key = arr1[i];
-                int index = key % newsz;
+                int key = hashArray[i];
+                int index = key % newSize;
 
-                // using quadratic probing
+                // Using quadratic probing to resolve collisions
                 int j = 0;
-                while (arr2[(index + j * j) % newsz] != -1 && j <= ((newsz + 1) / 2))
+                while (tempArray[(index + j * j) % newSize] != -1 && j <= ((newSize + 1) / 2))
                 {
-                    j += 1;
+                    j++;
                 }
-                int pos = (index + j * j) % newsz;
-                if (arr2[pos] == -1)
-                    arr2[pos] = key;
+                int pos = (index + j * j) % newSize;
+                if (tempArray[pos] == -1)
+                    tempArray[pos] = key;
                 else
                     cout << "Max probing limit reached!" << endl;
             }
         }
 
-        delete[] arr1; // delete the older array
-        arr1 = arr2;
-        size = newsz;
+        delete[] hashArray; 
+        hashArray = tempArray;
+        capacity = newSize;
     }
 
     void insert(int key)
     {
-        float new_alpha = input / (float)size; // typecast to float type
-        if (new_alpha >= alpha)
+        float currentLoad = elementsCount / (float)capacity; /
+        if (currentLoad >= loadFactor)
         {
-            Resizing();         //resize
+            resizeTable(); 
         }
 
-        int index = key % size;
+        int index = key % capacity;
         int i = 0;
-        while (arr1[(index + i * i) % size] != -1 && i <= ((size + 1) / 2))
+        while (hashArray[(index + i * i) % capacity] != -1 && i <= ((capacity + 1) / 2))
         {
-            if (arr1[(index + i * i) % size] == key)
+            if (hashArray[(index + i * i) % capacity] == key)
             {
                 cout << "Duplicate key insertion is not allowed" << endl;
                 return;
             }
-            i += 1;
+            i++;
         }
-        int pos = (index + i * i) % size;
-        if (arr1[pos] == -1)
-            {arr1[pos] = key;
-            input += 1;}
+        int pos = (index + i * i) % capacity;
+        if (hashArray[pos] == -1)
+        {
+            hashArray[pos] = key;
+            elementsCount++;
+        }
         else
         {
             cout << "Max probing limit reached!" << endl;
@@ -116,33 +115,32 @@ public:
         }
     }
 
-
-    int search(int key)             //function to search
+    int search(int key) 
     {
-        int index = key % size;
+        int index = key % capacity;
         int i = 0;
 
-        while (arr1[(index + i * i) % size] != key && i <= ((size + 1) / 2))
+        while (hashArray[(index + i * i) % capacity] != key && i <= ((capacity + 1) / 2))
         {
-            if (arr1[(index + i * i) % size] == -1)
+            if (hashArray[(index + i * i) % capacity] == -1)
             {
                 return -1;
             }
             i++;
         }
-        if (arr1[(index + i * i) % size] == key)
-            return (index + i * i) % size;
+        if (hashArray[(index + i * i) % capacity] == key)
+            return (index + i * i) % capacity;
         else
             return -1;
     }
     
     void remove(int key)
     {
-        int x = search(key);        //Element to remove
-        if (x != -1)
+        int loc = search(key); 
+        if (loc != -1)
         {
-            arr1[x] = -1;
-            input--;
+            hashArray[loc] = -1;
+            elementsCount--;
         }
         else
             cout << "Element not found" << endl;
@@ -150,15 +148,15 @@ public:
 
     void printTable()
     {
-        for (int i = 0; i < size; i++) 
+        for (int i = 0; i < capacity; i++) 
         {
-            if (arr1[i] == -1)
+            if (hashArray[i] == -1)
             {
                 cout << "- ";
             }
             else
             {
-                cout << arr1[i] << " ";
+                cout << hashArray[i] << " ";
             }
         }
         cout << endl;
