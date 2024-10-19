@@ -1,14 +1,12 @@
 #include <iostream>
 #include <algorithm>
 using namespace std;
-
 class HashTable
 {
     int capacity;
     int *hashArray;
     int elementsCount;
     float loadFactor; 
-
 public:
     HashTable(int initialSize)
     {
@@ -17,9 +15,8 @@ public:
         loadFactor = 0.8;
         elementsCount = 0;
         
-        fill(hashArray, hashArray + capacity, -1); // Fill array with -1 using standard function
+        fill(hashArray, hashArray + capacity, -1); 
     }
-
     int nextPrime(int currentSize) 
     {
         int num = currentSize * 2;
@@ -28,14 +25,12 @@ public:
             num++;
         }
         return num;
-    }
-    
+    } 
     bool checkprime(int num) 
     {
         if (num <= 1) return false;
         if (num <= 3) return true;
         if (num % 2 == 0 || num % 3 == 0) return false;
-        
         for (int i = 5; i * i <= num; i += 6)
         {
             if (num % i == 0 || num % (i + 2) == 0)
@@ -45,21 +40,17 @@ public:
         }
         return true;
     }
-
     void resizeTable()
     {
         int newSize = nextPrime(capacity); 
         int *tempArray = new int[newSize];
         fill(tempArray, tempArray + newSize, -1); // Fill with -1
-
         for (int i = 0; i < capacity; i++)
         {
             if (hashArray[i] != -1)
             {
                 int key = hashArray[i];
                 int index = key % newSize;
-
-                // Quadratic probing to resolve collisions
                 int j = 0;
                 while (tempArray[(index + j * j) % newSize] != -1 && j <= newSize / 2)
                 {
@@ -72,7 +63,6 @@ public:
                     cout << "Max probing limit reached!" << endl;
             }
         }
-
         delete[] hashArray; 
         hashArray = tempArray;
         capacity = newSize;
@@ -113,7 +103,6 @@ public:
     {
         int index = key % capacity;
         int i = 0;
-
         while (hashArray[(index + i * i) % capacity] != key && i <= capacity / 2)
         {
             if (hashArray[(index + i * i) % capacity] == -1)
@@ -123,8 +112,7 @@ public:
             i++;
         }
         return hashArray[(index + i * i) % capacity] == key ? (index + i * i) % capacity : -1;
-    }
-    
+    }    
     void remove(int key)
     {
         int loc = search(key); 
@@ -136,7 +124,6 @@ public:
         else
             cout << "Element not found" << endl;
     }
-
     void printTable()
     {
         for (int i = 0; i < capacity; i++) 
