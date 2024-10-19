@@ -1,162 +1,207 @@
 #include <iostream>
-#include <algorithm>
+#include <cmath>
 using namespace std;
 
-class HashTable
+class CustomHashTable
 {
     int capacity;
-    int *table;
-    int elementCount;
-    float loadFactor;
+    int *hashArray;
+    int numElements;
+    float loadFactor; // Load factor for resizing
 
 public:
-    HashTable(int size)
+    // Constructor for the hash table
+    CustomHashTable(int initialSize)
     {
-        capacity = size;
-        table = new int[capacity];
+        capacity = initialSize;
+        hashArray = new int[capacity];
         loadFactor = 0.8;
-        elementCount = 0;
+        numElements = 0;
 
+        // Set all slots as empty initially
         for (int i = 0; i < capacity; i++)
         {
-            table[i] = -1;
+            hashArray[i] = -1;
         }
     }
 
-    int nextPrime(int currentCapacity)
+    // Resize function to find the next prime number at least twice the current size
+    int getNextPrime(int currentSize)
     {
-        int candidate = currentCapacity * 2;
-        while (!isPrime(candidate))
+        int nextSize = currentSize * 2;
+        while (!isPrime(nextSize))
         {
-            candidate++;
+            nextSize += 1;
         }
-        return candidate;
+        return nextSize;
     }
 
-    bool isPrime(int number)
+    // Helper function to check if a number is prime
+    bool isPrime(int num)
     {
-        int divisorCount = 0;
-        for (int i = 1; i <= number; i++)
+        if (num <= 1)
+            return false;
+        for (int i = 2; i * i <= num; i++)
         {
-            if (number % i == 0)
+            if (num % i == 0)
             {
-                divisorCount++;
+                return false;
             }
         }
-        return divisorCount == 2;
+        return true;
     }
 
-    void rehash()
+    // Function to resize the hash table when load factor threshold is exceeded
+    void resizeTable()
     {
-        int newSize = nextPrime(capacity);
-        int *newTable = new int[newSize];
+        int newCapacity = getNextPrime(capacity); // New capacity after resizing
+        int *newArray = new int[newCapacity];
 
-        for (int i = 0; i < newSize; i++)
+        // Initialize the new array
+        for (int i = 0; i < newCapacity; i++)
         {
-            newTable[i] = -1;
+            newArray[i] = -1;
         }
 
+        // Rehash the elements into the new table
         for (int i = 0; i < capacity; i++)
         {
-            if (table[i] != -1)
+            if (hashArray[i] != -1)
             {
-                int val = table[i];
-                int pos = val % newSize;
+                int value = hashArray[i];
+                int newIndex = value % newCapacity;
 
-                int j = 0;
-                while (newTable[(pos + j * j) % newSize] != -1 && j <= ((newSize + 1) / 2))
+                // Apply quadratic probing to find the next available slot
+                int offset = 0;
+                while (newArray[(newIndex + offset * offset) % newCapacity] != -1 && offset <= ((newCapacity + 1) / 2))
                 {
-                    j++;
+                    offset += 1;
                 }
-                int finalPos = (pos + j * j) % newSize;
-                if (newTable[finalPos] == -1)
-                    newTable[finalPos] = val;
+                int finalPos = (newIndex + offset * offset) % newCapacity;
+                if (newArray[finalPos] == -1)
+                    newArray[finalPos] = value;
                 else
-                    cout << "Probing limit exceeded!" << endl;
+                    cout << "Max probing limit reached!" << endl;
             }
         }
 
-        delete[] table;
-        table = newTable;
-        capacity = newSize;
+        delete[] hashArray; // Free the old memory
+        hashArray = newArray;
+        capacity = newCapacity;
     }
 
-    void insert(int val)
+    // Insert function to add elements to the hash table
+    void insertKey(int value)
     {
-        float currentLoadFactor = elementCount / (float)capacity;
+        float currentLoadFactor = numElements / (float)capacity; // Compute current load factor
         if (currentLoadFactor >= loadFactor)
         {
-            rehash();
+            resizeTable(); // Trigger resizing if load factor exceeds the threshold
         }
 
-        int idx = val % capacity;
-        int i = 0;
-        while (table[(idx + i * i) % capacity] != -1 && i <= ((capacity + 1) / 2))
+        int startIndex = value % capacity;
+        int offset = 0;
+
+        // Use quadratic probing to resolve collisions
+        while (hashArray[(startIndex + offset * offset) % capacity] != -1 && offset <= ((capacity + 1) / 2))
         {
-            if (table[(idx + i * i) % capacity] == val)
+            if (hashArray[(startIndex + offset * offset) % capacity] == value)
             {
-                cout << "No duplicate keys allowed" << endl;
+                cout << "Duplicate key insertion is not allowed" << endl;
                 return;
             }
-            i++;
+            offset += 1;
         }
-        int finalIdx = (idx + i * i) % capacity;
-        if (table[finalIdx] == -1)
+
+        int finalIndex = (startIndex + offset * offset) % capacity;
+        if (hashArray[finalIndex] == -1)
         {
-            table[finalIdx] = val;
-            elementCount++;
+            hashArray[finalIndex] = value;
+            numElements += 1;
         }
         else
         {
-            cout << "Probing limit exceeded!" << endl;
-            return;
+            cout << "Max probing limit reached!" << endl;
         }
     }
 
-    int find(int val)
+    // Search for an element in the hash table
+    int searchKey(int value)
     {
-        int idx = val % capacity;
-        int i = 0;
+        int startIndex = value % capacity;
+        int offset = 0;
 
-        while (table[(idx + i * i) % capacity] != val && i <= ((capacity + 1) / 2))
+        // Apply quadratic probing while searching for the key
+        while (hashArray[(startIndex + offset * offset) % capacity] != value && offset <= ((capacity + 1) / 2))
         {
-            if (table[(idx + i * i) % capacity] == -1)
+            if (hashArray[(startIndex + offset * offset) % capacity] == -1)
             {
-                return -1;
+                return -1; // Element not found
             }
-            i++;
+            offset++;
         }
-        if (table[(idx + i * i) % capacity] == val)
-            return (idx + i * i) % capacity;
+
+        if (hashArray[(startIndex + offset * offset) % capacity] == value)
+            return (startIndex + offset * offset) % capacity;
         else
-            return -1;
+            return -1; // Element not found
     }
 
-    void erase(int val)
+    // Function to remove an element from the hash table
+    void deleteKey(int value)
     {
-        int position = find(val);
+        int position = searchKey(value); // Search for the element
         if (position != -1)
         {
-            table[position] = -1;
-            elementCount--;
+            hashArray[position] = -1; // Mark the position as empty
+            numElements--;
         }
         else
-            cout << "Value not found" << endl;
+        {
+            cout << "Element not found" << endl;
+        }
     }
 
-    void displayTable()
+    // Print the contents of the hash table
+    void printHashTable()
     {
-        for (int i = 0; i < capacity; i++) 
+        for (int i = 0; i < capacity; i++)
         {
-            if (table[i] == -1)
+            if (hashArray[i] == -1)
             {
-                cout << "- ";
+                cout << "- "; // Empty slot
             }
             else
             {
-                cout << table[i] << " ";
+                cout << hashArray[i] << " "; // Occupied slot
             }
         }
         cout << endl;
     }
+
+    // Destructor to release dynamically allocated memory
+    ~CustomHashTable()
+    {
+        delete[] hashArray;
+    }
+}; // End of class definition
+
+int main()
+{
+    CustomHashTable ht(7); // Create hash table with initial size 7
+
+    ht.insertKey(10);
+    ht.insertKey(20);
+    ht.insertKey(30);
+    ht.insertKey(25);
+    ht.insertKey(35);
+
+    cout << "Hash Table contents after insertion: ";
+    ht.printHashTable();
+
+    ht.deleteKey(25);
+    cout << "Hash Table contents after removing 25: ";
+    ht.printHashTable();
+
+    return 0;
 }
