@@ -23,14 +23,14 @@ public:
     int nextPrime(int currentSize) 
     {
         int num = currentSize * 2;
-        while (!isPrime(num))
+        while (!checkprime(num))
         {
             num++;
         }
         return num;
     }
     
-    bool isPrime(int num) 
+    bool checkprime(int num) 
     {
         if (num <= 1) return false;
         if (num <= 3) return true;
