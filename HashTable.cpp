@@ -4,110 +4,107 @@ using namespace std;
 
 class HashTable
 {
-    int capacity;
-    int *hashArray;
-    int elementsCount;
-    float loadFactor; 
+    int S;
+    int *arr1;
+    int input;
+    float alpha;       //alpha is load factor
 
 public:
-    HashTable(int initialSize)
+    HashTable(int x)
     {
-        capacity = initialSize;
-        hashArray = new int[capacity];
-        loadFactor = 0.8;
-        elementsCount = 0;
+        S = x;
+        arr1 = new int[S];
+        alpha = 0.8;
+        input = 0;
         
-        for (int i = 0; i < capacity; i++)
+
+        for (int i = 0; i < S; i++)
         {
-            hashArray[i] = -1;
+            arr1[i] = -1;
         }
     }
 
-    int nextPrime(int currentSize) 
-    {
-        int num = currentSize * 2;
-        while (!isPrime(num))
+
+    int resize(int S_current)    
+        int no = S_current * 2;
+        while (Check_prime(no) != true)
         {
-            num++;
+            no += 1;
         }
-        return num;
+        return no;
     }
     
-    bool isPrime(int num) 
+    bool Check_prime(int no)      
     {
-        int count = 0; 
-        for (int i = 1; i <= num; i++)
+        int c = 0;      
+        for (int i = 1; i <= no; i++)
         {
-            if (num % i == 0)
+            if (no % i == 0)
             {
-                count++;
+                c += 1;
             }
         }
-        return count == 2;
+        return c == 2;
     }
 
-    void resizeTable()
+    void Resizing()
     {
-        int newSize = nextPrime(capacity); 
-        int *tempArray = new int[newSize];
+        int newsz = resize(S);       
+        int *arr2 = new int[newsz];
 
-        for (int i = 0; i < newSize; i++)
+        for (int i = 0; i < newsz; i++)
         {
-            tempArray[i] = -1;
+            arr2[i] = -1;
         }
 
-        
-        for (int i = 0; i < capacity; i++)
+        for (int i = 0; i < S; i++)
         {
-            if (hashArray[i] != -1)
+            if (arr1[i] != -1)
             {
-                int key = hashArray[i];
-                int index = key % newSize;
+                int key = arr1[i];
+                int index = key % newsz;
 
-                // Using quadratic probing to resolve collisions
                 int j = 0;
-                while (tempArray[(index + j * j) % newSize] != -1 && j <= ((newSize + 1) / 2))
+                while (arr2[(index + j * j) % newsz] != -1 && j <= ((newsz + 1) / 2))
                 {
-                    j++;
+                    j += 1;
                 }
-                int pos = (index + j * j) % newSize;
-                if (tempArray[pos] == -1)
-                    tempArray[pos] = key;
+                int pos = (index + j * j) % newsz;
+                if (arr2[pos] == -1)
+                    arr2[pos] = key;
                 else
                     cout << "Max probing limit reached!" << endl;
             }
         }
 
-        delete[] hashArray; 
-        hashArray = tempArray;
-        capacity = newSize;
+        delete[] arr1; 
+        arr1 = arr2;
+        S = newsz;
     }
 
     void insert(int key)
     {
-        float currentLoad = elementsCount / (float)capacity; /
-        if (currentLoad >= loadFactor)
+        float new_alpha = input / (float)S; 
+        if (new_alpha >= alpha)
         {
-            resizeTable(); 
+            Resizing();         
         }
 
-        int index = key % capacity;
+        int index = key % S;
         int i = 0;
-        while (hashArray[(index + i * i) % capacity] != -1 && i <= ((capacity + 1) / 2))
+        while (arr1[(index + i * i) % S] != -1 && i <= ((S + 1) / 2))
         {
-            if (hashArray[(index + i * i) % capacity] == key)
+            if (arr1[(index + i * i) % S] == key)
             {
                 cout << "Duplicate key insertion is not allowed" << endl;
                 return;
             }
-            i++;
+            i += 1;
         }
-        int pos = (index + i * i) % capacity;
-        if (hashArray[pos] == -1)
-        {
-            hashArray[pos] = key;
-            elementsCount++;
-        }
+        int pos = (index + i * i) % S;
+        if (arr1[pos] == -1)
+            {arr1[pos] = key;
+            input += 1;}
         else
         {
             cout << "Max probing limit reached!" << endl;
@@ -115,32 +112,33 @@ public:
         }
     }
 
-    int search(int key) 
+
+    int search(int key)            
     {
-        int index = key % capacity;
+        int index = key % S;
         int i = 0;
 
-        while (hashArray[(index + i * i) % capacity] != key && i <= ((capacity + 1) / 2))
+        while (arr1[(index + i * i) % S] != key && i <= ((S + 1) / 2))
         {
-            if (hashArray[(index + i * i) % capacity] == -1)
+            if (arr1[(index + i * i) % S] == -1)
             {
                 return -1;
             }
             i++;
         }
-        if (hashArray[(index + i * i) % capacity] == key)
-            return (index + i * i) % capacity;
+        if (arr1[(index + i * i) % S] == key)
+            return (index + i * i) % S;
         else
             return -1;
     }
     
     void remove(int key)
     {
-        int loc = search(key); 
-        if (loc != -1)
+        int x = search(key);        
+        if (x != -1)
         {
-            hashArray[loc] = -1;
-            elementsCount--;
+            arr1[x] = -1;
+            input--;
         }
         else
             cout << "Element not found" << endl;
@@ -148,15 +146,15 @@ public:
 
     void printTable()
     {
-        for (int i = 0; i < capacity; i++) 
+        for (int i = 0; i < S; i++) 
         {
-            if (hashArray[i] == -1)
+            if (arr1[i] == -1)
             {
                 cout << "- ";
             }
             else
             {
-                cout << hashArray[i] << " ";
+                cout << arr1[i] << " ";
             }
         }
         cout << endl;
